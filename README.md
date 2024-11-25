@@ -15,7 +15,8 @@ Features -
 14- View Task Details
 15- Check status of the task
 16- Edit status of the task
-17- Firebase Logout
+17- Added loading state in the homepage
+18- Firebase Logout
 
 Setup Instruction - 
 No special instruction, I made it user friendly for easy navigation and understanding

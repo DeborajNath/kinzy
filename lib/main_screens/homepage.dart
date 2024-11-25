@@ -347,215 +347,232 @@ class _HomepageState extends State<Homepage> {
         ),
         bottomNavigationBar: GradientButton(
             onTap: () => _showTaskDialog(context), text: "Add Task"),
-        body: taskProvider.tasks.isEmpty
-            ? Center(
-                child: Text(
-                  "No tasks available. Add one!",
-                  style: TextStyle(color: primaryTextColor, fontSize: 16),
-                ),
+        body: taskProvider.isLoading
+            ? const Center(
+                child: CircularProgressIndicator(),
               )
-            : Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  children: [
-                    Row(
+            : taskProvider.tasks.isEmpty
+                ? Center(
+                    child: Text(
+                      "No tasks available. Add one!",
+                      style: TextStyle(color: primaryTextColor, fontSize: 16),
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: TextFormField(
-                            controller: _searchController,
-                            onChanged: (query) {
-                              taskProvider.searchTasks(query);
-                            },
-                            decoration: const InputDecoration(
-                                suffixIcon: Icon(Icons.search),
-                                border: OutlineInputBorder(),
-                                labelText: "Search"),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextFormField(
+                                controller: _searchController,
+                                onChanged: (query) {
+                                  taskProvider.searchTasks(query);
+                                },
+                                decoration: const InputDecoration(
+                                    suffixIcon: Icon(Icons.search),
+                                    border: OutlineInputBorder(),
+                                    labelText: "Search"),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 10,
+                            ),
+                            DropdownButton<String>(
+                              value: selectedFilter,
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    selectedFilter = newValue;
+                                  });
+                                  taskProvider.sortTasks(newValue);
+                                }
+                              },
+                              items: [
+                                "Recently Added",
+                                "A-Z order",
+                                "Z-A order"
+                              ].map<DropdownMenuItem<String>>((String value) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(value),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        DropdownButton<String>(
-                          value: selectedFilter,
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                selectedFilter = newValue;
-                              });
-                              taskProvider.sortTasks(newValue);
-                            }
-                          },
-                          items: ["Recently Added", "A-Z order", "Z-A order"]
-                              .map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
+                        const SizedBox(height: 16),
+                        taskProvider.filterTaskSearch.isEmpty
+                            ? Image.asset("assets/no_data_found.jpg")
+                            : Expanded(
+                                child: ListView.builder(
+                                  itemCount: taskProvider.tasks.length,
+                                  itemBuilder: (context, index) {
+                                    final task = taskProvider.tasks[index];
+                                    return Card(
+                                      color: cardBackgrround,
+                                      child: Container(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  task['title'],
+                                                  style: TextStyle(
+                                                      color: primaryTextColor,
+                                                      fontSize: 25,
+                                                      fontWeight:
+                                                          FontWeight.w700),
+                                                ),
+                                                const Spacer(),
+                                                CircleAvatar(
+                                                  backgroundColor: task[
+                                                              'status'] ==
+                                                          "Completed"
+                                                      ? green
+                                                      : task['status'] ==
+                                                              "On-Progress"
+                                                          ? Colors.yellow
+                                                          : task['status'] ==
+                                                                  "Todo"
+                                                              ? red
+                                                              : grey,
+                                                  maxRadius: 8,
+                                                )
+                                              ],
+                                            ),
+                                            Text(
+                                              task['description'],
+                                              style: TextStyle(
+                                                color: textColor,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                              height: 5,
+                                            ),
+                                            Text(
+                                              task['createdAt'] != null
+                                                  ? 'Created At: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(task['createdAt'].toDate())}'
+                                                  : 'No creation date',
+                                              style: TextStyle(
+                                                  color: grey, fontSize: 14),
+                                            ),
+                                            const SizedBox(height: 5),
+                                            // Check if the task has an updated time
+                                            Text(
+                                              task['updatedAt'] != null
+                                                  ? 'Updated At: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(task['updatedAt'].toDate())}'
+                                                  : 'Not updated yet',
+                                              style: TextStyle(
+                                                  color: grey, fontSize: 14),
+                                            ),
+                                            const SizedBox(
+                                              height: 10,
+                                            ),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                InkWell(
+                                                  onTap: () =>
+                                                      _handleDeleteTask(
+                                                          context, task['id']),
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: red,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              3),
+                                                    ),
+                                                    child: Text(
+                                                      "Delete",
+                                                      style: TextStyle(
+                                                          color:
+                                                              cardBackgrround),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  width: 10,
+                                                ),
+                                                InkWell(
+                                                  onTap: () {
+                                                    _showTaskDialog(context,
+                                                        taskId: task['id'],
+                                                        title: task['title'],
+                                                        description: task[
+                                                            'description']);
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.lightBlue,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              3),
+                                                    ),
+                                                    child: Text(
+                                                      "Edit",
+                                                      style: TextStyle(
+                                                          color:
+                                                              cardBackgrround),
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  width: 10,
+                                                ),
+                                                InkWell(
+                                                  onTap: () {
+                                                    _viewDetails(
+                                                      context,
+                                                      taskId: task['id'],
+                                                      title: task['title'],
+                                                      description:
+                                                          task['description'],
+                                                      status: task['status'],
+                                                    );
+                                                  },
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 4),
+                                                    decoration: BoxDecoration(
+                                                      color: primaryColor,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              3),
+                                                    ),
+                                                    child: Text(
+                                                      "View Details",
+                                                      style: TextStyle(
+                                                          color:
+                                                              cardBackgrround),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              )
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    taskProvider.filterTaskSearch.isEmpty
-                        ? Image.asset("assets/no_data_found.jpg")
-                        : Expanded(
-                            child: ListView.builder(
-                              itemCount: taskProvider.tasks.length,
-                              itemBuilder: (context, index) {
-                                final task = taskProvider.tasks[index];
-                                return Card(
-                                  color: cardBackgrround,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            Text(
-                                              task['title'],
-                                              style: TextStyle(
-                                                  color: primaryTextColor,
-                                                  fontSize: 25,
-                                                  fontWeight: FontWeight.w700),
-                                            ),
-                                            const Spacer(),
-                                            CircleAvatar(
-                                              backgroundColor: task['status'] ==
-                                                      "Completed"
-                                                  ? green
-                                                  : task['status'] ==
-                                                          "On-Progress"
-                                                      ? Colors.yellow
-                                                      : task['status'] == "Todo"
-                                                          ? red
-                                                          : grey,
-                                              maxRadius: 8,
-                                            )
-                                          ],
-                                        ),
-                                        Text(
-                                          task['description'],
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 5,
-                                        ),
-                                        Text(
-                                          task['createdAt'] != null
-                                              ? 'Created At: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(task['createdAt'].toDate())}'
-                                              : 'No creation date',
-                                          style: TextStyle(
-                                              color: grey, fontSize: 14),
-                                        ),
-                                        const SizedBox(height: 5),
-                                        // Check if the task has an updated time
-                                        Text(
-                                          task['updatedAt'] != null
-                                              ? 'Updated At: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(task['updatedAt'].toDate())}'
-                                              : 'Not updated yet',
-                                          style: TextStyle(
-                                              color: grey, fontSize: 14),
-                                        ),
-                                        const SizedBox(
-                                          height: 10,
-                                        ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.end,
-                                          children: [
-                                            InkWell(
-                                              onTap: () => _handleDeleteTask(
-                                                  context, task['id']),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 4),
-                                                decoration: BoxDecoration(
-                                                  color: red,
-                                                  borderRadius:
-                                                      BorderRadius.circular(3),
-                                                ),
-                                                child: Text(
-                                                  "Delete",
-                                                  style: TextStyle(
-                                                      color: cardBackgrround),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
-                                            InkWell(
-                                              onTap: () {
-                                                _showTaskDialog(context,
-                                                    taskId: task['id'],
-                                                    title: task['title'],
-                                                    description:
-                                                        task['description']);
-                                              },
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 4),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.lightBlue,
-                                                  borderRadius:
-                                                      BorderRadius.circular(3),
-                                                ),
-                                                child: Text(
-                                                  "Edit",
-                                                  style: TextStyle(
-                                                      color: cardBackgrround),
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: 10,
-                                            ),
-                                            InkWell(
-                                              onTap: () {
-                                                _viewDetails(
-                                                  context,
-                                                  taskId: task['id'],
-                                                  title: task['title'],
-                                                  description:
-                                                      task['description'],
-                                                  status: task['status'],
-                                                );
-                                              },
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 4),
-                                                decoration: BoxDecoration(
-                                                  color: primaryColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(3),
-                                                ),
-                                                child: Text(
-                                                  "View Details",
-                                                  style: TextStyle(
-                                                      color: cardBackgrround),
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          )
-                  ],
-                ),
-              ),
+                  ),
       ),
     );
   }

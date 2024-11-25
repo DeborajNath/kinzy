@@ -8,11 +8,12 @@ class TaskProvider extends ChangeNotifier {
 
   List<Map<String, dynamic>> _tasks = [];
   List<Map<String, dynamic>> _filteredTasks = [];
-
+  bool _isLoading = false;
   List<Map<String, dynamic>> get tasks =>
       _filteredTasks.isEmpty ? _tasks : _filteredTasks;
 
   bool _searchInProgress = false;
+  bool get isLoading => _isLoading;
 
   void sortTasks(String filter) {
     if (filter == "Recently Added") {
@@ -48,6 +49,7 @@ class TaskProvider extends ChangeNotifier {
 
   // Fetch tasks from Firestore
   Future<void> fetchTasks() async {
+    _isLoading = true;
     try {
       Query query = tasksCollection.orderBy('createdAt', descending: true);
       QuerySnapshot querySnapshot = await query.get();
@@ -59,9 +61,11 @@ class TaskProvider extends ChangeNotifier {
           // 'createdAt': data['createdAt'] ?? Timestamp.now(),
         };
       }).toList();
-      notifyListeners();
     } catch (e) {
       log("Error fetching tasks: $e");
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
   }
 
